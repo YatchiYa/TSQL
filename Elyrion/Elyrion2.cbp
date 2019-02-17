@@ -13,7 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="../../../../../../Program Files/boost_1_69_0/boost_1_69_0" />
+					<Add directory="../../../../../../../Program Files/boost_1_69_0/boost_1_69_0" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
