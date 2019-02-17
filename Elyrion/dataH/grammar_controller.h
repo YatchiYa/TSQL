@@ -32,11 +32,10 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include <boost/algorithm/string.hpp>
+
 
 // define our modules in order to not repeat each time
 using namespace boost::spirit;
-
 using namespace std;
 
 typedef struct grammar_Controller :
@@ -73,7 +72,6 @@ typedef struct grammar_Controller :
             strlit<>    NE("!=");
             chlit<>     AQ(']');
             chlit<>     IAQ('[');
-            chlit<>     DP(':');
 
 
             //---------------------------------------
@@ -99,6 +97,9 @@ typedef struct grammar_Controller :
           //	Start grammar definition
           //-----------------------------------------
 
+            identifier = nocase_d[lexeme_d[(alpha_p >> *(alnum_p | '_'))]];
+
+            string_literal = lexeme_d[ch_p('\'') >>  +( anychar_p - ch_p('\'') )>> ch_p('\'')];
 
 
             //-----------------------------------------------------------------
@@ -107,37 +108,22 @@ typedef struct grammar_Controller :
 
             //  Now - the actual BNF grammar for the parser
 
-
-            select_stmt_2 = +(select_from_query) ;
+            program = +(query) ;
+            query = longest_d[ select_from_query | select_when_from_query | select_where_from_query | select_when_where_from_query ] ;
 
             // hanle the select from query only
             select_from_query = select_stmt >> from_stmt ;
-            select_stmt = SELECT >> project_list ;      // select project list.
-
-            from_stmt = FROM >> from_stmt_2 ;     // from stmt
-            from_stmt_2 = table_name ;  // table name
-
-            project_list = longest_d[ col_projection >> COMMA >> col_projection
-                            | col_projection ];     // longuest_d  pour declarer un OR
-
-
-            col_projection = longest_d[col_reference | col_predicate] ;
-            col_predicate = col_reference  ;
-
-
-            col_reference = col_name;
-            /*col_reference = longest_d[ col_name | col_name >> AQ >> start >> IAQ
-                 | col_name >> AQ >> endx >> IAQ
-                 | col_name >> AQ >> start >> DP >> endx >> IAQ ];*/
-
-            predicate = longest_d[GT | LT | LE | GE | EQUAL | NE];
-            //start = start_t ;
-            //endx = endxx;
-
+            select_stmt = SELECT >> !(DISTINCT) >> ( STAR | var_stmt );
+            var_stmt = longest_d[ varname |  list_p( varname, COMMA ) ] ;
+            varname = identifier >> !(as_stmt) ;
+            as_stmt = AS >> alias ;
+            alias = identifier ;
+            from_stmt = FROM >> table_stmt >> ( SEMI | where_stmt );
+            table_stmt = longest_d[ identifier |  list_p(identifier, COMMA ) ] ;
 
 
             // handle the select from where query
-            // select_when_from_query = select_stmt >> from_stmt >> where_stmt ;
+            select_when_from_query = select_stmt >> from_stmt >> where_stmt ;
 
 
 
@@ -152,30 +138,23 @@ typedef struct grammar_Controller :
         }
 
 
-
       rule<ScannerT> const&
-        start() const { return select_stmt_2; }
+        start() const { return program; }
 
 
 //  Declare the keywords here
         symbols<> keywords;
 
         rule<ScannerT>
-        select_stmt_2, select_from_query, select_when_from_query, select_where_from_query, select_when_where_from_query,
-        select_stmt, from_stmt,
-        project_list, from_stmt_2, col_projection, col_reference, col_predicate, predicate,
+        program, query,
+        select_from_query, select_when_from_query, select_where_from_query, select_when_where_from_query,
+        select_stmt, star, var_stmt, varname,
+        as_stmt, alias, from_stmt, table_stmt,
 
         where_stmt, identifier, string_literal ;
 
-        string table_name, col_name ;
-        int start_t;
-        int endxx ;
-        int value;
-
     };
 };
-
-
 
 
 #endif // GRAMMAR_CONTROLLER_H_INCLUDED
