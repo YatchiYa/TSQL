@@ -13,7 +13,7 @@
 				<Option compiler="gcc" />
 				<Compiler>
 					<Add option="-O2" />
-					<Add directory="../../../../../../Program Files/boost_1_69_0/boost_1_69_0" />
+					<Add directory="../../../../../../../../Program Files/boost_1_69_0/boost_1_69_0" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
@@ -25,7 +25,9 @@
 			<Add option="-fexceptions" />
 		</Compiler>
 		<Unit filename="dataC/grammar_controller.cpp" />
+		<Unit filename="dataC/views.cpp" />
 		<Unit filename="dataH/grammar_controller.h" />
+		<Unit filename="dataH/views.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

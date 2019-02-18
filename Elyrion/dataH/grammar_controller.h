@@ -1,37 +1,6 @@
-
-// this class is used to check if the sql statement is in good form, to parse
-
-
-/*
-    this is the first try of a simple toy parser of the sql statement
-    in this first class, we will try to handle the sql statement
-    the different statement of sql select will be like :
-        -> SELECT * FROM TABLE
-        -> SELECT *[ different date ] FROM TABLE
-        -> SELECT *[ different date ] < ratio FROM TABLE
-        -> SELECT * FROM TABLE WHERE .....
-
-
-    to say simple, we will try to handle all the different SQL request that we can have with the different statement
-    like SELECT-STMT,  WHENE-STMT, WHERE-STMT, CONDITION-STMT, DISTINCT-STMT
-
-    |_> After parsing the sql statement, we need to execute this statement,
-        + we need to specify the string buffer  that stocks all the differents variable
-
-
-*/
-
-
-
 #ifndef GRAMMAR_CONTROLLER_H_INCLUDED
 #define GRAMMAR_CONTROLLER_H_INCLUDED
 
-// include all the librairies you need
-#include <boost/spirit.hpp>
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
 
 
 // define our modules in order to not repeat each time
@@ -70,8 +39,11 @@ typedef struct grammar_Controller :
             strlit<>    GE(">=");
             chlit<>     EQUAL('=');
             strlit<>    NE("!=");
-            chlit<>     AQ(']');
-            chlit<>     IAQ('[');
+            strlit<>    AQL(":]");
+            strlit<>    IAQL("[:");
+            chlit<>     IAQ(']');
+            chlit<>     AQ('[');
+            chlit<>     DP(':');
 
 
             //---------------------------------------
@@ -101,37 +73,67 @@ typedef struct grammar_Controller :
 
             string_literal = lexeme_d[ch_p('\'') >>  +( anychar_p - ch_p('\'') )>> ch_p('\'')];
 
-
             //-----------------------------------------------------------------
             // RULES
             //-----------------------------------------------------------------
 
             //  Now - the actual BNF grammar for the parser
 
-            program = +(query) ;
-            query = longest_d[ select_from_query | select_when_from_query | select_where_from_query | select_when_where_from_query ] ;
+
+            query = longest_d[ (select_from_query | select_when_from_query | select_where_from_query | select_when_where_from_query) ] ;
 
             // hanle the select from query only
             select_from_query = select_stmt >> from_stmt ;
-            select_stmt = SELECT >> !(DISTINCT) >> ( STAR | var_stmt );
-            var_stmt = longest_d[ varname |  list_p( varname, COMMA ) ] ;
-            varname = identifier >> !(as_stmt) ;
-            as_stmt = AS >> alias ;
-            alias = identifier ;
-            from_stmt = FROM >> table_stmt >> ( SEMI | where_stmt );
-            table_stmt = longest_d[ identifier |  list_p(identifier, COMMA ) ] ;
+            select_stmt = SELECT >> project_list;
+            project_list = longest_d[ (col_projection >> COMMA >> col_projection)
+                            | col_projection ];     // longuest_d  pour declarer un OR
+
+            col_projection = longest_d[col_reference | col_predicate] ;
+            col_predicate = col_reference >> predicate >> value ;
+
+            col_reference = longest_d[ col_name | (col_name >> AQ >> start_x >> AQL)
+                 | (col_name >> IAQL >> end_x >> IAQ)
+                 | (col_name >> AQ >> start_x >> DP >> end_x >> IAQ) ];
+
+            end_x = uint_p;
+            start_x = uint_p;
+
+            col_name = longest_d[anychar_p | identifier]  ;
+            value = longest_d[ uint_p | identifier ];
+
+            predicate = longest_d[ (GT | LT | LE | GE | EQUAL | NE) ];
+
+            from_stmt = FROM >> table_name ;
+            table_name = longest_d[ identifier |  list_p(identifier, COMMA ) ] ;
 
 
-            // handle the select from where query
-            select_when_from_query = select_stmt >> from_stmt >> where_stmt ;
 
 
 
-            // handle the select when from query
-            // ->select_where_from_query = select_stmt >> when_stmt >> from_stmt ;
+
+            // handle the select from where query with when statement !
+
+            select_when_from_query = select_stmt >> when_stmt >> from_stmt ;
+            when_stmt = longest_d[ anychar_p | identifier ];
+            when_stmt = WHEN >> pos_log_expr;
+
+            pos_log_expr = longest_d[col_predicate | pos_and_log_expr | pos_or_log_expr] ;
+            pos_and_log_expr = longest_d[ ( col_predicate >> AND_ >> col_predicate ) | ( LPAREN >> col_predicate >> AND_ >> col_predicate >> RPAREN ) ];
+            pos_or_log_expr = longest_d[ (col_predicate >> OR_ >> col_predicate) | (LPAREN >> col_predicate >> OR_ >> col_predicate >> RPAREN ) ];
+
+            seq_and_log_expr = col_predicate >> AND_ >> col_predicate ;
+            seq_or_log_expr = col_predicate >> OR_ >> col_predicate ;
+            seq_all_log_expr = longest_d[ ("all" >> col_predicate) | ("all" >> seq_log_expr) ];
+            seq_any_log_expr = longest_d[ ("any" >> col_predicate) | ("any" >> seq_log_expr) ];
+
+            // handle the select where from query
+
+            select_where_from_query = select_stmt >> from_stmt >> where_stmt ;
+            where_stmt = WHERE >> seq_log_expr ;
+            seq_log_expr = longest_d[ col_predicate | seq_and_log_expr | seq_or_log_expr | seq_all_log_expr | seq_any_log_expr ] ;
 
             // handle the select when from where query
-            // -> select_where_from_query = select_stmt >> when_stmt >> from_stmt >> where_stmt;
+            select_when_where_from_query = select_stmt >> when_stmt >> from_stmt >> where_stmt;
 
 
 
@@ -139,22 +141,21 @@ typedef struct grammar_Controller :
 
 
       rule<ScannerT> const&
-        start() const { return program; }
+        start() const { return query; }
 
 
 //  Declare the keywords here
         symbols<> keywords;
 
         rule<ScannerT>
-        program, query,
+        program, query, col_projection, col_name, predicate, value, col_pr, end_x, start_x,
         select_from_query, select_when_from_query, select_where_from_query, select_when_where_from_query,
-        select_stmt, star, var_stmt, varname,
-        as_stmt, alias, from_stmt, table_stmt,
-
+        select_stmt, when_stmt,
+        from_stmt, table_name, project_list, col_reference, col_predicate, pos_log_expr, pos_or_log_expr, pos_and_log_expr, seq_and_log_expr, seq_log_expr,
+        seq_all_log_expr, seq_any_log_expr, seq_or_log_expr,
         where_stmt, identifier, string_literal ;
 
     };
 };
-
 
 #endif // GRAMMAR_CONTROLLER_H_INCLUDED
