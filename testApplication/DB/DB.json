@@ -1,0 +1,48 @@
+{
+    "stocks":{
+        "id1": {
+            "sid" : 1,
+            "Headquater" : "Paris",
+            "Industry"   : "Fashion",
+            "position"   : [1,2,3,4,5],
+            "opening"    : [64,58,62,14],
+            "closing"	 : [89,96,158,147]
+        },
+        "id2": {
+            "sid" : 2,
+            "Headquater" : "Paris",
+            "Industry"   : "Food",
+            "position"   : [1,2,3,4,5],
+            "opening"    : [14,25,255,58],
+            "closing"	 : [254,89,78,99]
+        },
+        "id3": {
+            "sid" : 3,
+            "Headquater" : "NY",
+            "Industry"   : "Food",
+            "position"   : [1,2,3,4,5],
+            "opening"    : [25,58,69,254],
+            "closing"	 : [125,35,87,777]
+        },
+        "id4": {
+            "sid" : 4,
+            "Headquater" : "LA",
+            "Industry"   : "Fashion",
+            "position"   : [1,2,3,4,5],
+            "opening"    : [256,588,575,256],
+            "closing"	 : [11,24,355,457]
+        },
+        "id5": {
+            "sid" : 5,
+            "Headquater" : "Otawa",
+            "Industry"   : "Fashion",
+            "position"   : [1,2,3,4,5],
+            "opening"    : [253,45,22,47],
+            "closing"	 : [88,52,22,457]
+        }
+
+    }
+
+
+
+}

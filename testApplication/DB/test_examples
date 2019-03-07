@@ -1,0 +1,30 @@
+Exemple de test !!
+
+select opening from stocks
+select opening , closing from stocks
+select opening > 20 from stocks
+select openig , closing from stocks
+select opening[15:30] from stocks
+select opening[15:30] > 30 from stocks
+select opening[15:30] > 25, closing [25 : 36] from stocks
+select opening > 30 when closing < 65 from stocks
+select opening where opening > 15 from stocks
+select opening from stocks where opening > 15
+select opening > 20, headerquaters when closing[15:30] < 30 from stocks where headerqauters = paris
+select opening > 20, headerquaters when closing [15:30] < 30 where headerqauters = paris from stocks 
+
+
+
+
+
+
+
+
+
+
+
+à voir pour apres ! 
+-> refaire de tel sorte que quand on rentre opening, ou closing ça selectionne automatiquement plutot que ce je viens de faire ou je fais un tri par un if 
+	:> pour le faire suffit juste de faire une fonction sur le ResultRecord qui prend en paramettre l input et te revoie ce qui convient a ce dernier.
+
+
